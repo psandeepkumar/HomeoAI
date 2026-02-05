@@ -19,6 +19,55 @@ class SettingsScreen extends ConsumerWidget {
           // Demo Data Section
           const _SectionHeader(title: 'Demo & Testing'),
           ListTile(
+            leading: const Icon(Icons.delete_forever),
+            title: const Text('Clear All Data'),
+            subtitle: const Text('Delete all patients and cases from database'),
+            trailing: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Clear All Data?'),
+                    content: const Text('This will permanently delete all patients, cases, and related data. This action cannot be undone!'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete All'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true && context.mounted) {
+                  try {
+                    final db = ref.read(databaseProvider);
+                    await db.delete(db.remedySuggestions).go();
+                    await db.delete(db.mentalEmotionals).go();
+                    await db.delete(db.physicalGenerals).go();
+                    await db.delete(db.symptoms).go();
+                    await db.delete(db.cases).go();
+                    await db.delete(db.patients).go();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('All data cleared successfully!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error clearing data: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+              child: const Text('Clear'),
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.data_object),
             title: const Text('Load Sample Data'),
             subtitle: const Text('Add 3 demo patients with complete cases'),
@@ -39,6 +88,25 @@ class SettingsScreen extends ConsumerWidget {
                 if (confirmed == true && context.mounted) {
                   try {
                     final db = ref.read(databaseProvider);
+                    // Clear existing sample data first
+                    final patients = await db.select(db.patients).get();
+                    for (final patient in patients.where((p) => 
+                      p.name == 'Sarah Mitchell' || 
+                      p.name == 'Jennifer Lopez' || 
+                      p.name == 'Tommy Anderson'
+                    )) {
+                      // Delete all related data
+                      final cases = await (db.select(db.cases)..where((c) => c.patientId.equals(patient.id))).get();
+                      for (final caseItem in cases) {
+                        await (db.delete(db.symptoms)..where((s) => s.caseId.equals(caseItem.id))).go();
+                        await (db.delete(db.physicalGenerals)..where((pg) => pg.caseId.equals(caseItem.id))).go();
+                        await (db.delete(db.mentalEmotionals)..where((me) => me.caseId.equals(caseItem.id))).go();
+                        await (db.delete(db.remedySuggestions)..where((rs) => rs.caseId.equals(caseItem.id))).go();
+                      }
+                      await (db.delete(db.cases)..where((c) => c.patientId.equals(patient.id))).go();
+                      await (db.delete(db.patients)..where((p) => p.id.equals(patient.id))).go();
+                    }
+                    // Now load fresh sample data
                     await SampleDataGenerator.generateSampleData(db);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

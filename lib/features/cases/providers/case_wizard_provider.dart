@@ -116,9 +116,10 @@ class CaseWizard extends _$CaseWizard {
       
       // Add mental/emotional if available
       if (mental != null) {
-        formData['disposition'] = mental.disposition ?? '';
+        // Convert comma-separated strings to lists for checkbox groups
+        formData['disposition'] = _stringToList(mental.disposition);
         formData['greatest_fear'] = mental.fears ?? '';
-        formData['ailments_from'] = mental.emotionalTriggers ?? '';
+        formData['ailments_from'] = _stringToList(mental.emotionalTriggers);
       }
       
       state = state.copyWith(
@@ -132,6 +133,12 @@ class CaseWizard extends _$CaseWizard {
     }
   }
 
+  /// Helper to convert comma-separated string to list for checkbox groups
+  List<String> _stringToList(String? value) {
+    if (value == null || value.isEmpty) return [];
+    return value.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+  }
+
   /// Update form field
   void updateField(String key, dynamic value) {
     state = state.copyWith(
@@ -143,7 +150,11 @@ class CaseWizard extends _$CaseWizard {
   String? _toStringOrNull(dynamic value) {
     if (value == null) return null;
     if (value is String) return value.isEmpty ? null : value;
-    if (value is List) return value.isEmpty ? null : value.first?.toString();
+    if (value is List) {
+      if (value.isEmpty) return null;
+      // Join list items with comma for storage
+      return value.map((e) => e.toString()).join(', ');
+    }
     return value.toString();
   }
 

@@ -29,6 +29,10 @@ class SampleDataGenerator {
       consultationDate: DateTime(2024, 1, 15),
       spontaneousNarrative: const Value('''I've been experiencing terrible anxiety for the past 6 months. It started after my promotion at work. I wake up at 3 AM with heart palpitations and can't fall back asleep. I'm constantly worried about making mistakes at work, even though I'm performing well. My boss says I'm doing great, but I can't shake this feeling of impending doom. I've also noticed I'm very particular about cleanliness - my desk must be perfectly organized or I feel agitated. Sometimes I get sharp pains in my chest when the anxiety peaks.'''),
       status: const Value('active'),
+      finalRemedyName: const Value('Arsenicum Album'),
+      finalRemedyPotency: const Value('200C'),
+      finalRemedyDose: const Value('3 doses, 12 hours apart'),
+      prescriptionNotes: const Value('Patient shows clear Arsenicum picture: anxiety worse 1-3 AM, fastidiousness, restlessness, fear of illness. Start with 200C and observe for 2 weeks.'),
     ));
 
     // Chief Complaints for Patient 1
@@ -69,8 +73,8 @@ class SampleDataGenerator {
     await db.into(db.physicalGenerals).insert(PhysicalGeneralsCompanion.insert(
       id: _uuid.v4(),
       caseId: case1Id,
-      thermalType: const Value('Chilly'),
-      thirstQuantity: const Value('Large quantities, frequently'),
+      thermalType: const Value('chilly'),
+      thirstQuantity: const Value('Large quantities'),
       cravings: const Value('Salt, cheese, pickles'),
       aversions: const Value('Sweets'),
       sleepPosition: const Value('Right side'),
@@ -204,8 +208,8 @@ class SampleDataGenerator {
     await db.into(db.physicalGenerals).insert(PhysicalGeneralsCompanion.insert(
       id: _uuid.v4(),
       caseId: case3Id,
-      thermalType: const Value('Hot'),
-      thirstQuantity: const Value('Thirstless during fever'),
+      thermalType: const Value('hot'),
+      thirstQuantity: const Value('Thirstless'),
       cravings: const Value('Ice cream, cold drinks'),
       sleepPosition: const Value('Abdomen'),
     ));

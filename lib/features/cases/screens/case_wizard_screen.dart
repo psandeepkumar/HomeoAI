@@ -8,6 +8,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
 import '../providers/case_wizard_provider.dart';
+import '../../../core/providers/providers.dart';
 import 'case_detail_screen.dart';
 
 class CaseWizardScreen extends ConsumerStatefulWidget {
@@ -46,7 +47,35 @@ class _CaseWizardScreenState extends ConsumerState<CaseWizardScreen> {
         await ref.read(caseWizardProvider(widget.patientId).notifier).loadCase(widget.caseId!);
         // After loading, populate all form fields with the loaded data
         _populateFormFields();
+        // Load complaints (chief symptoms)
+        await _loadComplaints();
       });
+    }
+  }
+  
+  Future<void> _loadComplaints() async {
+    if (widget.caseId == null) return;
+    
+    try {
+      // Get symptoms from the repository
+      final symptomRepo = ref.read(symptomRepositoryProvider);
+      final symptoms = await symptomRepo.getSymptomsForCase(widget.caseId!);
+      
+      // Convert symptoms to complaint format
+      setState(() {
+        _complaints.clear();
+        for (final symptom in symptoms.where((s) => s.type == 'chief')) {
+          _complaints.add({
+            'symptom': symptom.symptomText,
+            'location': symptom.location ?? '',
+            'sensation': symptom.sensation ?? '',
+            'modalities': symptom.modalities ?? '',
+            'concomitants': symptom.concomitants ?? '',
+          });
+        }
+      });
+    } catch (e) {
+      print('[UI] Error loading complaints: $e');
     }
   }
   
@@ -596,6 +625,8 @@ class _CaseWizardScreenState extends ConsumerState<CaseWizardScreen> {
             FormBuilderTextField(name: 'final_remedy_name', decoration: const InputDecoration(labelText: 'Remedy Name *'), validator: FormBuilderValidators.required()),
             const SizedBox(height: 12),
             FormBuilderTextField(name: 'final_remedy_potency', decoration: const InputDecoration(labelText: 'Potency *'), validator: FormBuilderValidators.required()),
+            const SizedBox(height: 12),
+            FormBuilderTextField(name: 'final_remedy_dose', decoration: const InputDecoration(labelText: 'Dose/Frequency *', hintText: 'e.g., 3 doses, 12 hours apart'), validator: FormBuilderValidators.required()),
             const SizedBox(height: 12),
             FormBuilderTextField(name: 'prescription_notes', maxLines: 4, decoration: const InputDecoration(labelText: 'Notes')),
             const SizedBox(height: 24),
